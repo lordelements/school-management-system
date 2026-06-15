@@ -2,15 +2,22 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory,
+        Notifiable,
+        SoftDeletes,
+        HasApiTokens,
+        HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -18,31 +25,108 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+
+        'uuid',
+
+        'first_name',
+
+        'middle_name',
+
+        'last_name',
+
+        'suffix',
+
+        'username',
+
         'email',
+
+        'phone',
+
+        'gender',
+
+        'birth_date',
+
+        'avatar',
+
+        'address',
+
         'password',
+
+        'is_active',
+
+        'last_login_at',
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * Hidden attributes.
      *
      * @var list<string>
      */
     protected $hidden = [
+
         'password',
+
         'remember_token',
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * Attribute casting.
      *
      * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
+
             'email_verified_at' => 'datetime',
+
+            'birth_date' => 'date',
+
+            'last_login_at' => 'datetime',
+
+            'is_active' => 'boolean',
+
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Boot model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+
+            $user->uuid = Str::uuid();
+        });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Accessors
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Get full name.
+     */
+    public function getFullNameAttribute(): string
+    {
+        return trim(
+
+            $this->first_name . ' ' .
+
+                ($this->middle_name
+                    ? $this->middle_name . ' '
+                    : '') .
+
+                $this->last_name . ' ' .
+
+                ($this->suffix
+                    ? $this->suffix
+                    : '')
+        );
     }
 }
